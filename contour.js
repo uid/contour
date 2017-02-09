@@ -1,10 +1,24 @@
-// Marching squares implementation by mbostock, extracted for use
+// Marching squares implementation by mbostock, adapted for use
 // independent of d3.  Originally from:
 // https://github.com/d3/d3-plugins/tree/master/geom/contour
 
 (function(exports) {
 
-exports.Contour = function(grid, start) {
+function fromCanvas(canvas, threshold, start) {
+  var cw = canvas.width,
+      ch = canvas.height,
+      ctx = canvas.getContext("2d"),
+      imgData = ctx.getImageData(0, 0, cw, ch),
+      data = imgData.data,
+      t = threshold | 0,
+      s = start || d3_geom_contourStart(nonTransparent, Math.max(cw, ch));
+  function nonTransparent(x, y) {
+    return data[(y * cw + x) * 4 + 3] > t;
+  }
+  return s ? fromCallback(nonTransparent, s) : [];
+}
+
+function fromCallback(grid, start) {
   var s = start || d3_geom_contourStart(grid), // starting point
       c = [],    // contour polygon
       x = s[0],  // current x position
@@ -47,13 +61,13 @@ exports.Contour = function(grid, start) {
   } while (s[0] != x || s[1] != y);
 
   return c;
-};
+}
 
 // lookup tables for marching directions
 var d3_geom_contourDx = [1, 0, 1, 1,-1, 0,-1, 1,0, 0,0,0,-1, 0,-1,NaN],
     d3_geom_contourDy = [0,-1, 0, 0, 0,-1, 0, 0,1,-1,1,1, 0,-1, 0,NaN];
 
-function d3_geom_contourStart(grid) {
+function d3_geom_contourStart(grid, limit) {
   var x = 0,
       y = 0;
 
@@ -66,11 +80,19 @@ function d3_geom_contourStart(grid) {
     if (x === 0) {
       x = y + 1;
       y = 0;
+      if (x > limit) {
+        return null;
+      }
     } else {
       x = x - 1;
       y = y + 1;
     }
   }
 }
+
+exports.Contour = {
+  fromCanvas: fromCanvas,
+  fromCallback: fromCallback,
+};
 
 })(window);
