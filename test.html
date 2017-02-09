@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!--
+
+This test is derived from https://github.com/sakri/MarchingSquaresJS.
+According to Sakri's benchmark, the implementation by mbostock is about
+2x faster than Sakri's older implementation, so we have provided the
+mbostock impelmentation.
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Sakri Rosenstrom
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<html>
+<head>
+    <title>Marching Squares Test</title>
+
+    <script type="text/javascript" src="contour.js" ></script>
+
+    <script type="text/javascript">
+
+    var readyStateCheckInterval = setInterval( function() {
+        if (document.readyState === "complete") {
+            clearInterval(readyStateCheckInterval);
+            init();
+        }
+    }, 10);
+
+    function getRandomItemFromArray(array){
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
+    var canvas, context, outlinePoints, gitHubPreviewHack=false;
+
+    function init(){
+
+        //CREATE CANVAS
+        canvas = document.createElement('canvas');
+        canvas.style.position = "absolute";
+        context = canvas.getContext("2d");
+        var canvasContainer = document.getElementById("canvasContainer");
+        canvasContainer.appendChild(canvas);
+        canvas.width = 300;
+        canvas.height = 300;
+
+        //FILL CANVAS WITH A BLOB MADE OF RANDOM LETTERS
+        var weights = ["normal", "bold", "bolder", "lighter"];
+        var styles = ["normal", "italic", "oblique"];
+        var fonts = ["serif", "sans-serif", "cursive", "fantasy"];
+        context.textBaseline = "top";
+        context.fillStyle = "#CCCCCC";
+
+        var characters = ("ABCDEFGHIJKLMNOPQRSTUVXYZ1234567890").split("");
+        var i, character;
+        var numCharacters = 10;
+        var radianIncrement = (Math.PI*2) / numCharacters;
+
+        var grifa = getRandomItemFromArray;
+        for(i=0; i<numCharacters; i++){
+            context.font = grifa(weights) + " " + grifa(styles) + " " + 80 + "px " + grifa(fonts);
+            context.save();
+            context.translate(150, 150);
+            context.rotate(i * radianIncrement);
+            character = grifa(characters);
+            context.fillText(character,0,0);
+            context.restore();
+        }
+    }
+
+    function runMarchingSquares(){
+        var start = new Date();
+        outlinePoints = Contour.fromCanvas(canvas);  // returns [[x1,y1],[x2,y2],[x3,y3]... etc.]
+        var result = document.getElementById("result");
+        result.innerHTML = "March (new) took : "+ (new Date() - start);
+        renderOutline();
+    }
+
+    function runMarchingSquaresBenchmarks(ntimes=20){
+        var res = null;
+
+        // warm up
+        for (let i = 0; i < 5; ++i){
+            res = Contour.fromCanvas(canvas);
+        }
+        // test
+        let time_new = performance.now();
+        for (let i = 0; i < ntimes; ++i){
+            res = Contour.fromCanvas(canvas);
+        }
+        time_new = performance.now() - time_new;
+
+        var result = document.getElementById("result");
+        result.innerHTML = '<table><tr><td>time</td></tr>' + 
+              '<tr><td>' + parseInt(time_new) + '</td><td></tr>' + 
+            '<table>';
+    }
+
+    var timesRun = 0;
+
+    function renderOutline(){
+        //THIS IS IT, MARCHING SQUARES SAMPLE :
+        context.strokeStyle = timesRun%2 ? "#FF0000" : "#0000FF";
+        timesRun++;
+        context.beginPath();
+        context.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
+        for(var i=1; i<outlinePoints.length; i++){
+            context.lineTo(outlinePoints[i][0], outlinePoints[i][1], 1, 1);
+        }
+        context.closePath();
+        context.stroke()
+    }
+
+    </script>
+
+    <style type="text/css">
+
+        html, body{
+            margin : 0px;
+            width : 100%;
+            height : 100%;
+            overflow: hidden;
+        }
+
+        #canvasContainer{
+            margin : 0px;
+            width : 100%;
+            height : 100%;
+        }
+
+        #controlsDiv{
+            position: absolute;
+            font-family: sans-serif;
+            padding: 5px;
+            top: 280px;
+            text-align: center;
+        }
+
+    </style>
+
+</head>
+    <body>
+        <div id="canvasContainer"></div>
+        <div id="controlsDiv">
+            <span>
+                <button type="button" onclick="runMarchingSquares()">Run New Marching Squares</button>
+            </span>
+            <p>
+                <button type="button" onclick="runMarchingSquaresBenchmarks()">Run Marching Squares Benchmarks</button>
+            </p>
+            <p id="result"></p>
+        </div>
+
+    </body>
+</html>
