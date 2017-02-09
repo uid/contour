@@ -8,13 +8,15 @@ Computes a contour for a given *grid function* using the [marching squares](http
 
 Usage:
 ```
-<script src="https://rawgit.com/uid/contour/master/contourjs"></script>
+<script src="https://rawgit.com/uid/contour/master/contour.js"></script>
+```
 
-...
-
+```
 // Returns a path of coordinates [[x, y], ...] around nontransparent pixels.
-path = Contour.fromCanvas(canvas);
+var path = Contour.fromCanvas(canvas);
+```
 
+```
 // Callback is true for opaque coordinates. Never terminates if never true.
 path = Contour.fromCallback(function(x, y) { return (x*x+y*y) > 100; });
 ```
